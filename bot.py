@@ -4,8 +4,8 @@ from discord import app_commands
 from views.close_ticket import CloseView
 from views.select_ticket_type import TicketTypeSelect
 from views.appoint_ticket import RenderView
-from config import GUILD_ID, MEMBER_ROLE, STAFF, ID_GUILD_OWNER, RENDERMAKER_FORUM_ID, TICKET_CREATE_CATEGORY, CARD, INVITE, INFO_CHANNEL_ID, INFO_MESSAGE_ID, CONDITIONS_CHANNEL_ID, CONDITIONS_MESSAGE_ID, PLACING_AN_ORDER_CHANNEL_ID, PLACING_AN_ORDER_MESSAGE_ID
-from images.images_url import PAYMENT, INFO_PANEL, CONDITIONS_PANEL, PLACING_AN_ORDER_PANEL
+from config import GUILD_ID, MEMBER_ROLE, STAFF, ID_GUILD_OWNER, RENDERMAKER_FORUM_ID, TICKET_CREATE_CATEGORY, CARD, INVITE, INFO_CHANNEL_ID, INFO_MESSAGE_ID, CONDITIONS_CHANNEL_ID, CONDITIONS_MESSAGE_ID, PLACING_AN_ORDER_CHANNEL_ID, PLACING_AN_ORDER_MESSAGE_ID, CATALOG_CHANNEL_ID, CATALOG_MESSAGE_ID
+from images.images_url import PAYMENT, INFO_PANEL, CONDITIONS_PANEL, PLACING_AN_ORDER_PANEL, CATALOG, FULL_RENDER, MINECRAFT_TITLE_ANIMATION, CUSTOM_ANIMATION
 from fs import CloseDMView
 bot = commands.Bot(command_prefix="", intents=discord.Intents.all())
 
@@ -153,7 +153,50 @@ class ConfigCommands(app_commands.Group):
 
     await bot.http.request(discord.http.Route("PATCH", "/channels/{channel_id}/messages/{message_id}", channel_id=INFO_CHANNEL_ID, message_id=INFO_MESSAGE_ID), json=message_data)
     await interaction.followup.send("готово", ephemeral=True)
+  
+  @app_commands.command(name="catalog", description="обновить сообщение в 📜・каталог")
+  async def catalog(self, interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
+    if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете воспользоваться этой коммандой", ephemeral=True)
     
+    message_data = {"flags": 36864, "components": [
+      {"type": 10, "content": "*—Поясню за всё* `☠️🤙💀`"},
+      {"type": 17, "components": [{"type": 12, "items": [{"media": {"url": CATALOG}}]}]},
+      
+      {"type": 17, "components": [
+        {"type": 10, "content": "# 🛒 Товар: FULL RENDER"},
+        {"type": 12, "items": [{"media": {"url": FULL_RENDER}}]},
+        {"type": 14, "spacing": 1, "divider": True},
+        {"type": 10, "content": "### <:Brush:1503343652187930675> FULL RENDER\n* Рендер на локации/фоне c персонажами и моделями *(если они есть)*.\n\n◻ Все детали услуги обговариваются с рендермейкерами и администрацией в тикете вашего заказа."},
+        {"type": 14, "spacing": 2, "divider": True},
+        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: в среднем 1.399₽<:Emerald:1503337138635149342>"}
+      ]},
+        
+      {"type": 17, "components": [
+        {"type": 10, "content": "# 🛒 Товар: MINECRAFT TITLE ANIMATION"},
+        {"type": 12, "items": [{"media": {"url": MINECRAFT_TITLE_ANIMATION}}]},
+        {"type": 14, "spacing": 1, "divider": True},
+        {"type": 10, "content": "### <:Brush:1503343652187930675> MINECRAFT TITLE ANIMATION\n* Анимация кастомного майнкрафт заглавия.\n\n◻ Все детали услуги обговариваются с рендермейкерами и администрацией в тикете вашего заказа."},
+        {"type": 14, "spacing": 2, "divider": True},
+        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: в среднем 999₽<:Emerald:1503337138635149342>"}
+      ]},
+        
+      {"type": 17, "components": [
+        {"type": 10, "content": "# 🛒 Товар: CUSTOM ANIMATION"},
+        {"type": 12, "items": [{"media": {"url": CUSTOM_ANIMATION}}]},
+        {"type": 14, "spacing": 1, "divider": True},
+        {"type": 10, "content": "### <:Brush:1503343652187930675> CUSTOM ANIMATION\n* Анимация как в трейлерах самой игры.\n\n◻ Все детали услуги обговариваются с рендермейкерами и администрацией в тикете вашего заказа."},
+        {"type": 14, "spacing": 2, "divider": True},
+        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: изначальный рендер 899₽, затем по 249₽ за 1 секунду анимации<:Emerald:1503337138635149342>"},
+        
+        {"type": 14, "spacing": 1, "divider": True},
+        {"type": 10, "content": F"-# По всем вопросам обращаться к <@{ID_GUILD_OWNER}> или [клик](<https://discord.com/users/{ID_GUILD_OWNER}>)"}
+      ]}
+    ]}
+
+    await bot.http.request(discord.http.Route("PATCH", "/channels/{channel_id}/messages/{message_id}", channel_id=CATALOG_CHANNEL_ID, message_id=CATALOG_MESSAGE_ID), json=message_data)
+    await interaction.followup.send("готово", ephemeral=True)
+   
   @app_commands.command(name="conditions", description="обновить сообщение в 🧷・условия-заказа")
   async def conditions_panel(self, interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=True)
@@ -225,3 +268,4 @@ class ConfigCommands(app_commands.Group):
 
 
 bot.tree.add_command(RendermakerCommands(), guild=discord.Object(id=GUILD_ID))
+bot.tree.add_command(ConfigCommands(), guild=discord.Object(id=GUILD_ID))

@@ -38,7 +38,7 @@ async def get_user_tickets(guild, user):
 class CloseDMView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(discord.ui.Button(label="Send from Studio`s MANERA ", style=discord.ButtonStyle.url, url=f"https://discord.com/channels/{GUILD_ID}"))
+        self.add_item(discord.ui.Button(label="Send from Studio`s MANERA", style=discord.ButtonStyle.url, url=f"https://discord.com/channels/{GUILD_ID}"))
         self.add_item(HideMsgDM())
         
 class HideMsgDM(discord.ui.Button):
