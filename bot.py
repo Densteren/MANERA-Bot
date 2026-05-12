@@ -254,7 +254,7 @@ class ConfigCommands(app_commands.Group):
         {"type": 10, "content": "Заказывай в MANER`E\nМы создадим рендер по твоему тех-заданию в наилучшем виде и реализации."},
         {"type": 14, "spacing": 2, "divider": True},
         
-        {"type": 1, "components": [{"type": 3, "custom_id": "ticket:placing_an_order", "placeholder": "Выберите нужное", "max_values": 1, "options": [{"label": "Рендер", "value": "render", "emoji": {"name": "Netherite_Upgrade_Smithing_Templ", "id": 1495122438797660243}, "default": False}]}]},
+        {"type": 1, "components": [{"type": 3, "custom_id": "ticket:placing_an_order", "placeholder": "Выберите нужное", "max_values": 1, "options": [{"label": "Рендер", "value": "render", "emoji": {"name": "Netherite_Upgrade_Smithing_Templ", "id": 1495122438797660243}, "default": False}, {"label": "Анимация", "value": "animation", "emoji": {"name": "Axolotl", "id": 1503669257286717440}, "default": False}]}]},
         #{"type": 1, "components": [{"type": 2, "style": 2, "label": "Рендер", "emoji": {"name": "Netherite_Upgrade_Smithing_Templ", "id": 1495122438797660243}, "custom_id": "ticket_button:placing_an_order"}]},
         {"type": 1, "components": [{"type": 2, "style": 2, "label": "Очистить выбор", "emoji": {"name": "Wind_Charged", "id": 1488847018930737262},"custom_id": "ticket:clear"}]},
         {"type": 14, "spacing": 1, "divider": True},
@@ -268,4 +268,4 @@ class ConfigCommands(app_commands.Group):
 
 
 bot.tree.add_command(RendermakerCommands(), guild=discord.Object(id=GUILD_ID))
-bot.tree.add_command(ConfigCommands(), guild=discord.Object(id=GUILD_ID))
+#bot.tree.add_command(ConfigCommands(), guild=discord.Object(id=GUILD_ID))

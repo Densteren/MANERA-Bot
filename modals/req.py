@@ -1,9 +1,9 @@
 import discord, io, aiohttp
 from discord import ui
-from config import TICKET_CREATE_CATEGORY, GUILD_ID, RENDERMAKER_ROLE
+from config import TICKET_CREATE_CATEGORY, GUILD_ID, RENDERMAKER_ROLE, ANIMATOR_ROLE
 from fs import generate_random_id
 from views.close_ticket import CloseButton
-from views.appoint_ticket import AppointTicketButton, AssignDesiredTicketButton, ASSIGN_CACHE
+from views.appoint_ticket import AppointTicketButtonRender, AssignDesiredTicketButtonRender, AppointTicketButtonAnimator, AssignDesiredTicketButtonAnimator
 from config import TICKET_VIEWIER_ROLES, STAFF, BUYER_ROLE
 from images.images_url import CREATEREQUESTMODAL
 class CreateRequestModal(discord.ui.Modal):
@@ -11,7 +11,14 @@ class CreateRequestModal(discord.ui.Modal):
         super().__init__(title="Ты заказываешь в MANER`E")
         self.type = type
         self.bot = bot
-        role = bot.get_guild(GUILD_ID).get_role(RENDERMAKER_ROLE)
+        if type == "render":
+            role = bot.get_guild(GUILD_ID).get_role(RENDERMAKER_ROLE)
+            text_render = "Рендермейкер"
+            text_models = "Файлы для рендера"
+        elif type == "animation":
+            role = bot.get_guild(GUILD_ID).get_role(ANIMATOR_ROLE)
+            text_render = "Аниматор"
+            text_models = "Файлы для анимации"
         sorted_members = sorted(role.members, key=lambda m: m.display_name.lower())
         
         self.render_select = discord.ui.Select(
@@ -19,19 +26,19 @@ class CreateRequestModal(discord.ui.Modal):
             required=True,
             
             options=[
+                discord.SelectOption(
+                    label="Без разницы",
+                    value="0",
+                    emoji="<a:soggy_boom:1421917569954091081>",
+                    default=True
+                ),
                 *[discord.SelectOption(
                     label=m.display_name,
                     value=str(m.id),
                     emoji="<a:shulker_ping:591776781523222549>"
                 )
                 for m in sorted_members[:24]
-                ],
-                discord.SelectOption(
-                    label="Без разницы",
-                    value="any",
-                    emoji="<a:soggy_boom:1421917569954091081>",
-                    default=True
-                )
+                ]
             ]
         )
         self.models_upload = discord.ui.FileUpload(required=False, max_values=10)
@@ -45,7 +52,7 @@ class CreateRequestModal(discord.ui.Modal):
         )
         
         self.render = ui.Label(
-            text="Рендермейкер",
+            text=text_render,
             component=self.render_select
         )
         
@@ -59,7 +66,7 @@ class CreateRequestModal(discord.ui.Modal):
         )
     
         self.models = ui.Label(
-            text="Файлы для рендера",
+            text=text_models,
             component=self.models_upload
         )
         self.add_item(self.task)
@@ -79,20 +86,31 @@ class CreateRequestModal(discord.ui.Modal):
         ticket_id = generate_random_id()
         category = interaction.guild.get_channel(TICKET_CREATE_CATEGORY)  
         if not category: category = None
-        created = await category.create_text_channel(name=f"{self.type}-{interaction.user.name}-{ticket_id}", overwrites=overwrites, topic=f"{interaction.user.id}", reason="БЫЛ ОТКРЫТ ТИКЕТ")
-        selected = self.render_select.values[0] if self.render_select.values else "any"
+        selected = self.render_select.values[0] if self.render_select.values else "0"
+        created = await category.create_text_channel(name=f"{self.type}-{interaction.user.name}-{ticket_id}", overwrites=overwrites, topic=f"{interaction.user.id}:{selected}", reason="БЫЛ ОТКРЫТ ТИКЕТ")
         if selected == "any": render = "Без разницы"
         else:
             member = interaction.guild.get_member(int(selected))
             render = member.display_name if member else "Не найден"
-            ASSIGN_CACHE[f"{created.id}"] = int(selected)
         
         await interaction.followup.send(content=f"Тикет создан: <#{created.id}>", ephemeral=True)
         view = discord.ui.View(timeout=None) 
         view.add_item(CloseButton())
-        view.add_item(AppointTicketButton())
-        render_id = selected if selected != "any" else None
-        if render_id: view.add_item(AssignDesiredTicketButton())
+        render_id = selected if selected != "0" else None
+        if self.type == "render": 
+            name1 = "рендермейкером"
+            name2 = "Рендермейкер"
+            if render_id is not None:
+                user = interaction.guild.get_member(int(render_id))
+                if user: view.add_item(AssignDesiredTicketButtonRender(user.display_name.lower()))
+            view.add_item(AppointTicketButtonRender())
+        if self.type == "animation":
+            name1 = "аниматором"
+            name2 = "Аниматор"
+            if render_id is not None:
+                user = interaction.guild.get_member(int(render_id))
+                if user: view.add_item(AssignDesiredTicketButtonAnimator(user.display_name.lower()))
+            view.add_item(AppointTicketButtonAnimator())
         
         message_data = {"flags": 36864, "components": [
             {"type": 10,"content": f"Привет, <@{interaction.user.id}>! Мы скоро возьмёмся за твой заказ, а пока прочитай всю информацию ниже <:Arrow_Down_Highlighted:1488578347716972865>"},
@@ -101,10 +119,10 @@ class CreateRequestModal(discord.ui.Modal):
                 {"type": 14, "spacing": 2, "divider": True},
                 
                 {"type": 10, "content": f"# 💳 Заказ {self.type.title()} #{ticket_id}"},
-                {"type": 10, "content": "`🧩` Перед началом выполнения заказа требуется внести предоплату в размере **100%** от всей стоимости заказа.\n\n`🧩` Стоимость заказа лично обговаривается с рендермейкером который будет работать над твоим заказом.\n\n`🧩` Сроки выполнения твоего заказа начинаются от 2 *полных* дней и заканчиваются до 14 *полных* дней."},
+                {"type": 10, "content": f"`🧩` Перед началом выполнения заказа требуется внести предоплату в размере **100%** от всей стоимости заказа.\n\n`🧩` Стоимость заказа лично обговаривается с {name1} который будет работать над твоим заказом.\n\n`🧩` Сроки выполнения твоего заказа начинаются от 2 до 14 дней."},
                 {"type": 14, "spacing": 1, "divider": True},
                 
-                {"type": 10, "content": f"**✏️ ТЗ:** ```{self.task.value}```\n**🎥 Рендермейкер:** ```{render}```\n**🗓️ Сроки:** ```{self.time.value}```"}
+                {"type": 10, "content": f"**✏️ ТЗ:** ```{self.task.value}```\n**🎥 {name2}:** ```{render}```\n**🗓️ Сроки:** ```{self.time.value}```"}
             ]}
         ]}
 
