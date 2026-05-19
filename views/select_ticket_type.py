@@ -4,6 +4,7 @@ from fs import get_user_tickets
 from config import STAFF, PLACING_AN_ORDER_CHANNEL_ID, PLACING_AN_ORDER_MESSAGE_ID, ID_GUILD_OWNER
 from images.images_url import PLACING_AN_ORDER_PANEL
 from modals.req import CreateRequestModal
+from modals.rev import ReviewModal, CACHE
 class TicketTypeSelect(discord.ui.View):
   def __init__(self, bot):
     super().__init__(timeout=None)
@@ -23,10 +24,15 @@ class TicketTypeSelect(discord.ui.View):
   async def render_button(self, interaction: discord.Interaction, button: discord.ui.Button):
     await interaction.response.send_modal(CreateRequestModal("render", self.bot))
     
+  @discord.ui.button(label="Написать отзыв", custom_id="ticket_button:review", style=discord.ButtonStyle.gray, emoji="<:Paper:1506354283853910159>",)
+  async def review_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    if interaction.channel.id not in CACHE: return await interaction.response.send_message("Нет данных в кэше :(", ephemeral=True)
+    await interaction.response.send_modal(ReviewModal(self.bot, channel=interaction.channel.id))
+
   @discord.ui.button(label="Очистить выбор", custom_id="ticket:clear", style=discord.ButtonStyle.gray, emoji="<:Wind_Charged:1488847018930737262>")
   async def clear_button(self, interaction: discord.Interaction, button: discord.ui.Button):
     await interaction.response.defer(ephemeral=True)
-    if time.time() - self.clear_cooldowns.get(interaction.user.id, 0) < 60 and not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send(f"⏳ Подожди {int(60 - (time.time() - self.clear_cooldowns.get(interaction.user.id, 0)))} сек.", ephemeral=True)
+    if time.time() - self.clear_cooldowns.get(interaction.user.id, 0) < 30 and not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send(f"⏳ Подожди {int(30 - (time.time() - self.clear_cooldowns.get(interaction.user.id, 0)))} сек.", ephemeral=True)
     self.clear_cooldowns[interaction.user.id] = time.time()
         
     message_data = {"flags": 36864, "components": [

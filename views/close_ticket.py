@@ -3,7 +3,7 @@ from asyncio import sleep
 from config import TICKET_VIEWIER_ROLES, STAFF, BUYER_ROLE, TICKET_CLOSE_CATEGORY
 
 class CloseButton(discord.ui.Button):
-    def __init__(self): super().__init__(label="Отменить заказ", style=discord.ButtonStyle.red, custom_id="ticket:close", emoji="🔒")
+    def __init__(self): super().__init__(label="Отменить заказ", style=discord.ButtonStyle.gray, custom_id="ticket:close", emoji="<:Barrier:1506354696430948473>")
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -32,10 +32,10 @@ class ConfirmCompleteView(discord.ui.View):
         member = interaction.guild.get_member(int(interaction.channel.topic))
         if interaction.user.id != int(interaction.channel.topic):
             await interaction.channel.send(f"{member.mention}, {interaction.user.mention} сохранил твою фотоплёнку. *Надеемся увидеть тебя еще раз!*")
-            await msg_close.edit(content="Тикет закрыт!", view=None)
+            await msg_complite.edit(content="Тикет закрыт!", view=None)
         else:
             await interaction.channel.send(f"{member.mention} сохранил фотоплёнку. *Надеемся увидеть тебя еще раз!*")
-            await msg_close.edit(content="Тикет закрыт!\n*Надеемся увидеть тебя еще раз!*", view=None)
+            await msg_complite.edit(content="Тикет закрыт!\n*Надеемся увидеть тебя еще раз!*", view=None)
         await self.message.delete()
         await sleep(3)
         overwrites = {interaction.guild.default_role: discord.PermissionOverwrite(view_channel=False, send_messages=False)}
@@ -95,7 +95,7 @@ class CloseView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
         
-    @discord.ui.button(label="Отменить заказ", style=discord.ButtonStyle.red, custom_id="ticket:close", emoji="🔒")
+    @discord.ui.button(label="Отменить заказ", style=discord.ButtonStyle.gray, custom_id="ticket:close", emoji="<:Barrier:1506354696430948473>")
     async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         user_id, selected_id = map(int, interaction.channel.topic.split(":"))

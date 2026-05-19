@@ -1,13 +1,15 @@
-import discord
+import discord, asyncio, base64
 from discord.ext import commands
 from discord import app_commands
 from views.close_ticket import CloseView
 from views.select_ticket_type import TicketTypeSelect
 from views.appoint_ticket import RenderView
+from modals.rev import CACHE
 from config import GUILD_ID, MEMBER_ROLE, STAFF, ID_GUILD_OWNER, RENDERMAKER_FORUM_ID, TICKET_CREATE_CATEGORY, CARD, INVITE, INFO_CHANNEL_ID, INFO_MESSAGE_ID, CONDITIONS_CHANNEL_ID, CONDITIONS_MESSAGE_ID, PLACING_AN_ORDER_CHANNEL_ID, PLACING_AN_ORDER_MESSAGE_ID, CATALOG_CHANNEL_ID, CATALOG_MESSAGE_ID
-from images.images_url import PAYMENT, INFO_PANEL, CONDITIONS_PANEL, PLACING_AN_ORDER_PANEL, CATALOG, FULL_RENDER, MINECRAFT_TITLE_ANIMATION, CUSTOM_ANIMATION
+from images.images_url import REVIEW, PAYMENT, INFO_PANEL, CONDITIONS_PANEL, PLACING_AN_ORDER_PANEL, CATALOG, FULL_RENDER, MINECRAFT_TITLE_ANIMATION, CUSTOM_ANIMATION
 from fs import CloseDMView
-bot = commands.Bot(command_prefix="", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix="251611!", intents=discord.Intents.all())
+semaphore = asyncio.Semaphore(50)
 
 @bot.event
 async def on_ready():
@@ -28,7 +30,11 @@ async def on_member_join(member: discord.Member):
   if member.guild.id != GUILD_ID: return
   await member.add_roles(member.guild.get_role(MEMBER_ROLE), reason=f"НОВЫЙ ПОЛЬЗОВАТЕЛЬ")
   #await member.send("Привет", view=CloseDMView)
-  
+
+@bot.event
+async def on_interaction(interaction: discord.Interaction):
+  async with semaphore: pass
+
 @bot.event
 async def on_command_error(ctx, error):
   if isinstance(error, commands.CommandNotFound): return
@@ -85,28 +91,50 @@ class RendermakerCommands(app_commands.Group):
     await interaction.followup.send(f"удалено", ephemeral=True)
 
 
-@bot.command(name="оплата")
-async def payment(ctx):
-  if not any(role.id in STAFF for role in ctx.author.roles): return
-  if ctx.channel.category_id != TICKET_CREATE_CATEGORY: return
-  if ctx.message.content.strip() != "оплата": return
+@bot.tree.command(name="отзыв_review", description="показать окно отзыва", guild=discord.Object(id=GUILD_ID))
+@app_commands.describe(result_url="ссылка на результат заказа для отображения в отзыве")
+async def review(interaction: discord.Interaction, result_url: str):
+  await interaction.response.defer(ephemeral=True)
+  if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send_message("Вы не можете воспользоваться этой коммандой", ephemeral=True)
+  if not interaction.channel.category or interaction.channel.category.id != TICKET_CREATE_CATEGORY: return await interaction.followup.send("Вы не можете показывать отзыв вне тикетов", ephemeral=True)
+  CACHE[interaction.channel.id] = result_url
     
   message_data = {"flags": 36864, "components": [
     {"type": 17, "components": [
-        {"type": 12, "items": [{"media": {"url": {PAYMENT}}}]},
+        {"type": 12, "items": [{"media": {"url": REVIEW}}]},
         {"type": 14, "spacing": 2, "divider": True},
-        {"type": 10, "content": f"# Оплата\n### > Карта:\n{CARD}"}
+        {"type": 10, "content": f"# Отзыв о заказе\n\n### > Инструкция по написанию отзыва:\n1. Вам не нужно загружать готовый продукт, бот это сделает за вас.\n2. Вам нужно нажать на кнопку «Написать отзыв» и заполнить модалку."},
+        {"type": 1, "components": [{"type": 2, "style": 2, "label": "Написать отзыв", "emoji": {"name": "Paper", "id": 1506354283853910159}, "custom_id": f"ticket_button:review"}]},
     ]}
   ]}
   
-  await bot.http.request(discord.http.Route("POST", "/channels/{channel_id}/messages", channel_id=ctx.channel.id), json=message_data)
+  await bot.http.request(discord.http.Route("POST", "/channels/{channel_id}/messages", channel_id=interaction.channel.id), json=message_data)
+  await interaction.followup.send("готово", ephemeral=True)
+
+@bot.tree.command(name="оплата_payment", description="показать окно оплаты", guild=discord.Object(id=GUILD_ID))
+@app_commands.describe(amount="сумма")
+async def payment(interaction: discord.Interaction, amount: int):
+  await interaction.response.defer(ephemeral=True)
+  if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send_message("Вы не можете воспользоваться этой коммандой", ephemeral=True)
+  if not interaction.channel.category or interaction.channel.category.id != TICKET_CREATE_CATEGORY: return await interaction.followup.send("Вы не можете показывать оплату вне тикетов", ephemeral=True)
+    
+  message_data = {"flags": 36864, "components": [
+    {"type": 17, "components": [
+        {"type": 12, "items": [{"media": {"url": PAYMENT}}]},
+        {"type": 14, "spacing": 2, "divider": True},
+        {"type": 10, "content": f"# Оплата заказа\n### > Карта:\n{CARD}\n\n### > Сумма к оплате:\n{amount}₽\n\n### > Инструкция по оплате:\n1. Отправьте сумму на карту, указанную выше с комментарием «`Оплата заказа: {interaction.channel.name}`».\n2. После отправки средств, прикрепите скриншот с переводом."}
+    ]}
+  ]}
+  
+  await bot.http.request(discord.http.Route("POST", "/channels/{channel_id}/messages", channel_id=interaction.channel.id), json=message_data)
+  await interaction.followup.send("готово", ephemeral=True)
 
 @bot.tree.command(name="add", description="добавить пользователя в тикет", guild=discord.Object(id=GUILD_ID))
 @app_commands.describe(user="кого добавить")
 async def add(interaction: discord.Interaction, user: discord.Member):
   await interaction.response.defer()
   if not any(role.id in STAFF or role.id == 1437131949264080937 for role in interaction.user.roles): return await interaction.followup.send("Вы не можете добавлять пользователей", ephemeral=True)
-  if interaction.channel.category.id != TICKET_CREATE_CATEGORY and not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете добавлять пользователей вне тикетов", ephemeral=True)
+  if not interaction.channel.category or interaction.channel.category.id != TICKET_CREATE_CATEGORY and not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете добавлять пользователей вне тикетов", ephemeral=True)
   #await interaction.response.defer()
   await interaction.channel.set_permissions(user, view_channel=True, reason=f"ЗАПРОС КОММАНДОЙ ОТ {interaction.user.name}")
   embed = discord.Embed(description=f"{user.mention} добавлен в тикет {interaction.channel.mention}", color=0x1ec45b)
@@ -117,7 +145,7 @@ async def add(interaction: discord.Interaction, user: discord.Member):
 async def remove(interaction: discord.Interaction, user: discord.Member):
   await interaction.response.defer()
   if not any(role.id in STAFF or role.id == 1437131949264080937 for role in interaction.user.roles): return await interaction.followup.send("Вы не можете убирать пользователей", ephemeral=True)
-  if interaction.channel.category.id != TICKET_CREATE_CATEGORY and not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете убирать пользователей вне тикетов", ephemeral=True)
+  if not interaction.channel.category or interaction.channel.category.id != TICKET_CREATE_CATEGORY and not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете убирать пользователей вне тикетов", ephemeral=True)
   await interaction.channel.set_permissions(user, overwrite=None, reason=f"ЗАПРОС КОММАНДОЙ ОТ {interaction.user.name}")
   embed = discord.Embed(description=f"{user.mention} удалён из тикета {interaction.channel.mention}", color=0xef5250)
   await interaction.followup.send(embed=embed, silent=True)
@@ -134,7 +162,7 @@ class ConfigCommands(app_commands.Group):
     message_data = {"flags": 36864, "components": [
       {"type": 10, "content": "*—Че ваще за студия* `🔊🔎📂`"},
       {"type": 17, "components": [
-        {"type": 12, "items": [{"media": {"url": {INFO_PANEL}}}]},
+        {"type": 12, "items": [{"media": {"url": INFO_PANEL}}]},
         {"type": 14, "spacing": 2, "divider": True},
         
         {"type": 10, "content": "# <:Cutlass_Year:1488503994241519757> Информация"},
@@ -144,7 +172,7 @@ class ConfigCommands(app_commands.Group):
         {"type": 10, "content": "# <:Glowing:1488555982207320205> Как проходит заказ"},
         {"type": 14, "spacing": 2, "divider": True},
         
-        {"type": 10, "content": "<:Death_Barter:1488505304529371177> Здесь, оформление и завершение твоего заказа проходит в несколько этапов: <:Arrow_Down_Highlighted:1488578347716972865> \n\n— `1.`  Выбираете товар в нашем боте и открываете тикет.\n\n— `2.` Расписываете своё тех-задание, по желанию можете выбрать с кем хотите работать из наших сотрудников *(если что, мы поможем с выбором работника для вашей идеи)*.\n\n— `3.` Обговариваете с нами мелкие детали заказа.\n\n— `4.` Мы отправляем вам номер карты на которую вы скидываете предоплату в размере **100%**.\n\n— `5.` После того как мы подтвердим что вы скинули денежную предоплату, мы **уведомим вас** и **начнём выполнение заказа**.\n\n— `6.` Мы отправляем вам рендер по этапам *(добавляем **локацию** → **персонажей**/**модели** → **свет** → **эффекты**)*. В это время вы можете вносить правки, на этапе финального рендера правки не вносятся, только если сотрудник согласится внести правку на этом этапе и снова зарендерить финальный результат."},
+        {"type": 10, "content": "<:Death_Barter:1488505304529371177> Здесь, оформление и завершение твоего заказа проходит в несколько этапов: <:Arrow_Down_Highlighted:1488578347716972865> \n\n— `1.`  Выбираете товар в нашем боте и открываете тикет.\n\n— `2.` Расписываете своё тех-задание, по желанию можете выбрать с кем хотите работать из наших сотрудников *(если что, мы поможем с выбором работника для вашей идеи)*.\n\n— `3.` Обговариваете с нами мелкие детали заказа.\n\n— `4.` Мы отправляем вам номер карты на которую вы скидываете предоплату в размере **100%**.\n\n— `5.` После того как мы подтвердим что вы скинули денежную предоплату, мы **уведомим вас** и **начнём выполнение заказа**.\n\n— `6.` Мы отправляем вам заказ по этапам: *(добавляем **локацию** → **персонажей**/**модели** → **свет** → **эффекты** → **анимируем**)*. В это время вы можете вносить правки, на этапе финального продукта правки не вносятся, только если сотрудник согласится внести правку на этом этапе и снова зарендерить финальный результат."},
         {"type": 14, "spacing": 1, "divider": True},
         
         {"type": 10, "content": "-# НИКОГДА НЕ СОМНЕВАЙСЯ В MANER`E!"}
@@ -169,7 +197,7 @@ class ConfigCommands(app_commands.Group):
         {"type": 14, "spacing": 1, "divider": True},
         {"type": 10, "content": "### <:Brush:1503343652187930675> FULL RENDER\n* Рендер на локации/фоне c персонажами и моделями *(если они есть)*.\n\n◻ Все детали услуги обговариваются с рендермейкерами и администрацией в тикете вашего заказа."},
         {"type": 14, "spacing": 2, "divider": True},
-        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: в среднем 1.399₽<:Emerald:1503337138635149342>"}
+        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: в среднем ???₽<:Emerald:1503337138635149342>"}
       ]},
         
       {"type": 17, "components": [
@@ -178,7 +206,7 @@ class ConfigCommands(app_commands.Group):
         {"type": 14, "spacing": 1, "divider": True},
         {"type": 10, "content": "### <:Brush:1503343652187930675> MINECRAFT TITLE ANIMATION\n* Анимация кастомного майнкрафт заглавия.\n\n◻ Все детали услуги обговариваются с рендермейкерами и администрацией в тикете вашего заказа."},
         {"type": 14, "spacing": 2, "divider": True},
-        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: в среднем 999₽<:Emerald:1503337138635149342>"}
+        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: в среднем 699₽<:Emerald:1503337138635149342>"}
       ]},
         
       {"type": 17, "components": [

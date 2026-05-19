@@ -88,7 +88,7 @@ class CreateRequestModal(discord.ui.Modal):
         if not category: category = None
         selected = self.render_select.values[0] if self.render_select.values else "0"
         created = await category.create_text_channel(name=f"{self.type}-{interaction.user.name}-{ticket_id}", overwrites=overwrites, topic=f"{interaction.user.id}:{selected}", reason="БЫЛ ОТКРЫТ ТИКЕТ")
-        if selected == "any": render = "Без разницы"
+        if selected == "0": render = "Без разницы"
         else:
             member = interaction.guild.get_member(int(selected))
             render = member.display_name if member else "Не найден"
