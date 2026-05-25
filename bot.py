@@ -1,10 +1,10 @@
-import discord, asyncio, base64
+import discord, asyncio, time
 from discord.ext import commands
 from discord import app_commands
 from views.close_ticket import CloseView
 from views.select_ticket_type import TicketTypeSelect
 from views.appoint_ticket import RenderView
-from modals.rev import CACHE
+from modals.rev import CACHE, clear_old_cache
 from config import GUILD_ID, MEMBER_ROLE, STAFF, ID_GUILD_OWNER, RENDERMAKER_FORUM_ID, TICKET_CREATE_CATEGORY, CARD, INVITE, INFO_CHANNEL_ID, INFO_MESSAGE_ID, CONDITIONS_CHANNEL_ID, CONDITIONS_MESSAGE_ID, PLACING_AN_ORDER_CHANNEL_ID, PLACING_AN_ORDER_MESSAGE_ID, CATALOG_CHANNEL_ID, CATALOG_MESSAGE_ID
 from images.images_url import REVIEW, PAYMENT, INFO_PANEL, CONDITIONS_PANEL, PLACING_AN_ORDER_PANEL, CATALOG, FULL_RENDER, MINECRAFT_TITLE_ANIMATION, CUSTOM_ANIMATION
 from fs import CloseDMView
@@ -95,15 +95,16 @@ class RendermakerCommands(app_commands.Group):
 @app_commands.describe(result_url="ссылка на результат заказа для отображения в отзыве")
 async def review(interaction: discord.Interaction, result_url: str):
   await interaction.response.defer(ephemeral=True)
+  clear_old_cache()
   if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send_message("Вы не можете воспользоваться этой коммандой", ephemeral=True)
   if not interaction.channel.category or interaction.channel.category.id != TICKET_CREATE_CATEGORY: return await interaction.followup.send("Вы не можете показывать отзыв вне тикетов", ephemeral=True)
-  CACHE[interaction.channel.id] = result_url
+  CACHE[interaction.channel.id] = {"data": result_url, "created_at": time.time()}
     
   message_data = {"flags": 36864, "components": [
     {"type": 17, "components": [
         {"type": 12, "items": [{"media": {"url": REVIEW}}]},
         {"type": 14, "spacing": 2, "divider": True},
-        {"type": 10, "content": f"# Отзыв о заказе\n\n### > Инструкция по написанию отзыва:\n1. Вам не нужно загружать готовый продукт, бот это сделает за вас.\n2. Вам нужно нажать на кнопку «Написать отзыв» и заполнить модалку."},
+        {"type": 10, "content": f"# Отзыв о заказе\n\n### > Инструкция по написанию отзыва:\n1. Вам не нужно загружать готовый продукт, бот это сделает за вас.\n2. Вам нужно нажать на кнопку «Написать отзыв» и заполнить поля."},
         {"type": 1, "components": [{"type": 2, "style": 2, "label": "Написать отзыв", "emoji": {"name": "Paper", "id": 1506354283853910159}, "custom_id": f"ticket_button:review"}]},
     ]}
   ]}
@@ -201,21 +202,21 @@ class ConfigCommands(app_commands.Group):
       ]},
         
       {"type": 17, "components": [
-        {"type": 10, "content": "# 🛒 Товар: MINECRAFT TITLE ANIMATION"},
-        {"type": 12, "items": [{"media": {"url": MINECRAFT_TITLE_ANIMATION}}]},
-        {"type": 14, "spacing": 1, "divider": True},
-        {"type": 10, "content": "### <:Brush:1503343652187930675> MINECRAFT TITLE ANIMATION\n* Анимация кастомного майнкрафт заглавия.\n\n◻ Все детали услуги обговариваются с рендермейкерами и администрацией в тикете вашего заказа."},
-        {"type": 14, "spacing": 2, "divider": True},
-        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: в среднем 699₽<:Emerald:1503337138635149342>"}
-      ]},
-        
-      {"type": 17, "components": [
         {"type": 10, "content": "# 🛒 Товар: CUSTOM ANIMATION"},
         {"type": 12, "items": [{"media": {"url": CUSTOM_ANIMATION}}]},
         {"type": 14, "spacing": 1, "divider": True},
         {"type": 10, "content": "### <:Brush:1503343652187930675> CUSTOM ANIMATION\n* Анимация как в трейлерах самой игры.\n\n◻ Все детали услуги обговариваются с рендермейкерами и администрацией в тикете вашего заказа."},
         {"type": 14, "spacing": 2, "divider": True},
-        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: изначальный рендер 899₽, затем по 249₽ за 1 секунду анимации<:Emerald:1503337138635149342>"},
+        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: изначальный рендер 899₽, затем по 249₽ за 1 секунду анимации<:Emerald:1503337138635149342>"}
+      ]},
+      
+      {"type": 17, "components": [
+        {"type": 10, "content": "# 🛒 Товар: MINECRAFT TITLE ANIMATION"},
+        {"type": 12, "items": [{"media": {"url": MINECRAFT_TITLE_ANIMATION}}]},
+        {"type": 14, "spacing": 1, "divider": True},
+        {"type": 10, "content": "### <:Brush:1503343652187930675> MINECRAFT TITLE ANIMATION\n* Анимация кастомного майнкрафт заглавия.\n\n◻ Все детали услуги обговариваются с рендермейкерами и администрацией в тикете вашего заказа."},
+        {"type": 14, "spacing": 2, "divider": True},
+        {"type": 10, "content": "## <:Arrow_Up_Highlighted:1503342014803087430>  Прайс: в среднем 699₽<:Emerald:1503337138635149342>"},
         
         {"type": 14, "spacing": 1, "divider": True},
         {"type": 10, "content": F"-# По всем вопросам обращаться к <@{ID_GUILD_OWNER}> или [клик](<https://discord.com/users/{ID_GUILD_OWNER}>)"}
@@ -282,8 +283,7 @@ class ConfigCommands(app_commands.Group):
         {"type": 10, "content": "Заказывай в MANER`E\nМы создадим рендер по твоему тех-заданию в наилучшем виде и реализации."},
         {"type": 14, "spacing": 2, "divider": True},
         
-        {"type": 1, "components": [{"type": 3, "custom_id": "ticket:placing_an_order", "placeholder": "Выберите нужное", "max_values": 1, "options": [{"label": "Рендер", "value": "render", "emoji": {"name": "Netherite_Upgrade_Smithing_Templ", "id": 1495122438797660243}, "default": False}, {"label": "Анимация", "value": "animation", "emoji": {"name": "Axolotl", "id": 1503669257286717440}, "default": False}]}]},
-        #{"type": 1, "components": [{"type": 2, "style": 2, "label": "Рендер", "emoji": {"name": "Netherite_Upgrade_Smithing_Templ", "id": 1495122438797660243}, "custom_id": "ticket_button:placing_an_order"}]},
+        {"type": 1, "components": [{"type": 3, "custom_id": "ticket:placing_an_order", "placeholder": "Выберите нужное", "max_values": 1, "options": [{"label": "FULL RENDER", "value": "render", "emoji": {"name": "Netherite_Upgrade_Smithing_Templ", "id": 1495122438797660243}, "default": False}, {"label": "MINECRAFT TITLE ANIMATION", "value": "title", "emoji": {"name": "Cherry_Hanging_Sign", "id": 1506355717303701587}, "default": False}, {"label": "CUSTOM ANIMATION", "value": "animation", "emoji": {"name": "Axolotl", "id": 1503669257286717440}, "default": False}]}]},
         {"type": 1, "components": [{"type": 2, "style": 2, "label": "Очистить выбор", "emoji": {"name": "Wind_Charged", "id": 1488847018930737262},"custom_id": "ticket:clear"}]},
         {"type": 14, "spacing": 1, "divider": True},
         

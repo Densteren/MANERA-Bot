@@ -1,7 +1,12 @@
-import discord
+import discord, time
 from discord import ui
 from config import REVIEWS_CHANNEL_ID
 CACHE = {}
+CACHE_LIFETIME = 60 * 60 * 24 * 3
+
+def clear_old_cache():
+    expired = [key for key, value in CACHE.items() if time.time() - value["created_at"] > CACHE_LIFETIME]
+    for key in expired: del CACHE[key]
 
 class ReviewModal(discord.ui.Modal):
     def __init__(self, bot, channel):
@@ -27,7 +32,10 @@ class ReviewModal(discord.ui.Modal):
         self.add_item(self.review_text)
 
     async def on_submit(self, interaction: discord.Interaction):
-        REVIEW = CACHE[self.channel]
+        cache_data = CACHE.get(self.channel)
+        if not cache_data: return await interaction.response.send_message("Кэш не найден :(", ephemeral=True)
+
+        REVIEW = cache_data["data"]
         critique = ""
         if self.review_text.value: critique = f"\n\n## > Рецензия:\n{self.review_text.value}"
         stars = "Ошибка"

@@ -1,7 +1,6 @@
 from config import TICKET_CREATE_CATEGORY, GUILD_ID
 from datetime import datetime, timezone, timedelta
-import random
-import discord
+import random, discord
 
 def generate_random_id():
     now = datetime.now(timezone(timedelta(hours=3)))

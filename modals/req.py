@@ -1,9 +1,9 @@
 import discord, io, aiohttp
 from discord import ui
-from config import TICKET_CREATE_CATEGORY, GUILD_ID, RENDERMAKER_ROLE, ANIMATOR_ROLE
+from config import TICKET_CREATE_CATEGORY, GUILD_ID, RENDERMAKER_ROLE, ANIMATOR_ROLE, TITLE_ANIMATOR_ROLE
 from fs import generate_random_id
 from views.close_ticket import CloseButton
-from views.appoint_ticket import AppointTicketButtonRender, AssignDesiredTicketButtonRender, AppointTicketButtonAnimator, AssignDesiredTicketButtonAnimator
+from views.appoint_ticket import AppointTicketButtonRender, AssignDesiredTicketButtonRender, AppointTicketButtonAnimator, AssignDesiredTicketButtonAnimator, AppointTicketButtonTitleAnimator, AssignDesiredTicketButtonTitleAnimator
 from config import TICKET_VIEWIER_ROLES, STAFF, BUYER_ROLE
 from images.images_url import CREATEREQUESTMODAL
 class CreateRequestModal(discord.ui.Modal):
@@ -19,10 +19,15 @@ class CreateRequestModal(discord.ui.Modal):
             role = bot.get_guild(GUILD_ID).get_role(ANIMATOR_ROLE)
             text_render = "Аниматор"
             text_models = "Файлы для анимации"
+        elif type == "title":
+            role = bot.get_guild(GUILD_ID).get_role(TITLE_ANIMATOR_ROLE)
+            text_render = "Мультипликатор"
+            text_models = "Файлы для анимации"
+            
         sorted_members = sorted(role.members, key=lambda m: m.display_name.lower())
         
         self.render_select = discord.ui.Select(
-            placeholder="Кого хотите видеть на месте рендермейкера",
+            placeholder="Кого хотите видеть на месте исполнителя?",
             required=True,
             
             options=[
@@ -111,6 +116,13 @@ class CreateRequestModal(discord.ui.Modal):
                 user = interaction.guild.get_member(int(render_id))
                 if user: view.add_item(AssignDesiredTicketButtonAnimator(user.display_name.lower()))
             view.add_item(AppointTicketButtonAnimator())
+        if self.type == "title":
+            name1 = "мультипликатором"
+            name2 = "Мультипликатор"
+            if render_id is not None:
+                user = interaction.guild.get_member(int(render_id))
+                if user: view.add_item(AssignDesiredTicketButtonTitleAnimator(user.display_name.lower()))
+            view.add_item(AppointTicketButtonTitleAnimator())
         
         message_data = {"flags": 36864, "components": [
             {"type": 10,"content": f"Привет, <@{interaction.user.id}>! Мы скоро возьмёмся за твой заказ, а пока прочитай всю информацию ниже <:Arrow_Down_Highlighted:1488578347716972865>"},
