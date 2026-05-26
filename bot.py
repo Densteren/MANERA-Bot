@@ -5,7 +5,7 @@ from views.close_ticket import CloseView
 from views.select_ticket_type import TicketTypeSelect
 from views.appoint_ticket import RenderView
 from modals.rev import CACHE, clear_old_cache
-from config import GUILD_ID, MEMBER_ROLE, STAFF, ID_GUILD_OWNER, RENDERMAKER_FORUM_ID, TICKET_CREATE_CATEGORY, CARD, INVITE, INFO_CHANNEL_ID, INFO_MESSAGE_ID, CONDITIONS_CHANNEL_ID, CONDITIONS_MESSAGE_ID, PLACING_AN_ORDER_CHANNEL_ID, PLACING_AN_ORDER_MESSAGE_ID, CATALOG_CHANNEL_ID, CATALOG_MESSAGE_ID
+from config import GUILD_ID, MEMBER_ROLE, STAFF, WORKERS, ID_GUILD_OWNER, RENDERMAKER_FORUM_ID, TICKET_CREATE_CATEGORY, CARD, INVITE, INFO_CHANNEL_ID, INFO_MESSAGE_ID, CONDITIONS_CHANNEL_ID, CONDITIONS_MESSAGE_ID, PLACING_AN_ORDER_CHANNEL_ID, PLACING_AN_ORDER_MESSAGE_ID, CATALOG_CHANNEL_ID, CATALOG_MESSAGE_ID
 from images.images_url import REVIEW, PAYMENT, INFO_PANEL, CONDITIONS_PANEL, PLACING_AN_ORDER_PANEL, CATALOG, FULL_RENDER, MINECRAFT_TITLE_ANIMATION, CUSTOM_ANIMATION
 from fs import CloseDMView
 bot = commands.Bot(command_prefix="251611!", intents=discord.Intents.all())
@@ -40,46 +40,53 @@ async def on_command_error(ctx, error):
   if isinstance(error, commands.CommandNotFound): return
 
 
-class RendermakerCommands(app_commands.Group):
-  def __init__(self): super().__init__(name="rendermaker", description="команды для работы с портфолио рендермейкеров")
+class WorkersCommands(app_commands.Group):
+  def __init__(self): super().__init__(name="workers", description="команды для работы с портфолио работников")
   
   @app_commands.command(name="add", description="добавить портфолио для рендермейкера")
-  @app_commands.describe(user="рендермейкер", rendermaker="Никнейм (название публикации)", bio="Описание / биография", url="Ссылка на изображение (1 главное изображение)", price="Цена (в среднем в ₽)")
-  async def rendermaker_add(self, interaction: discord.Interaction, user: discord.Member, rendermaker: str, bio: str, url: str, price: int):
+  @app_commands.describe(user="Работник", name="Как обращаться к работнику", url="Ссылка на изображение (1 главное изображение)", price="Цена (в среднем в ₽)")
+  async def worker_add(self, interaction: discord.Interaction, user: discord.Member, name: str, url: str, price: int, image1: str, image2: str = None, image3: str = None, image4: str = None, image5: str = None, image6: str = None, image7: str = None, image8: str = None, image9: str = None):
     await interaction.response.defer(ephemeral=True)
     if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете воспользоваться этой коммандой", ephemeral=True)
-  
-    message_data = {"name": f"{rendermaker}", "message": {"flags": 36864, "components": [{"type": 17, "components": [{"type": 12, "items": [{"media": {"url": f"{url}"}}]}, {"type": 14, "spacing": 2, "divider": True}, {"type": 10, "content": f"# {rendermaker}\n### > Bio:\n{bio.replace('\\n', '\n')}\n\n## > Price: в среднем {price}₽"}]}]}}
+
+    images = [image1, image2, image3, image4, image5, image6, image7, image8, image9]
+    images = [img for img in images if img]
+    media_items = [{"media": {"url": img}} for img in images]
+
+    #roles = [role for role in user.roles if role.id in WORKERS]
+    #role_mentions = ", ".join(role.mention for role in roles)
+    
+    message_data = {"name": user.display_name, "message": {"flags": 36864, "components": [{"type": 17, "components": [{"type": 12, "items": [{"media": {"url": url}}]}, {"type": 14, "spacing": 2, "divider": True}, {"type": 10, "content": f"# {user.display_name}\nПривет! Я {user.mention}, но можно просто \"**{name}**\"\n\n## > Price: в среднем {price}₽"}]}, {"type": 17,"components": [{"type": 10, "content": f"## > Примеры работ:"}, {"type": 12, "items": media_items}]}]}}
     
     msg = await bot.http.request(discord.http.Route("POST", "/channels/{forum_id}/threads", forum_id=RENDERMAKER_FORUM_ID), json=message_data, reason=f"ЗАПРОС КОММАНДОЙ ОТ {interaction.user.name}")
-    thread_id = msg["id"]
-    thread = interaction.guild.get_channel(thread_id)
-    if thread is None:
-      try: thread = await interaction.guild.fetch_channel(thread_id)
-      except Exception: return await interaction.followup.send("Ошибка: ветка не найдена или ID неверный", ephemeral=True)
-    msg_td = await thread.send(f"{user.mention}")
-    await msg_td.delete()
-    await interaction.followup.send(f"[перейти к сообщению](<https://discord.com/channels/{GUILD_ID}/{thread_id}/{thread_id}>)", ephemeral=True)
+    await interaction.followup.send(f"[перейти к сообщению](<https://discord.com/channels/{GUILD_ID}/{msg["id"]}/{msg["id"]}>)", ephemeral=True)
 
   @app_commands.command(name="edit", description="редактировать портфолио для рендермейкера")
-  @app_commands.describe(id="ID сообщения / ветки в 📍・портфолио", rendermaker="Никнейм (название публикации)", bio="Описание / биография", url="Ссылка на изображение (1 главное изображение)", price="Цена (в среднем в ₽)")
-  async def rendermaker_edit(self, interaction: discord.Interaction, id: str, rendermaker: str, bio: str, url: str, price: int):
+  @app_commands.describe(id="ID сообщения / ветки в 📍・портфолио", user="Работник", name="Как обращаться к работнику", url="Ссылка на изображение (1 главное изображение)", price="Цена (в среднем в ₽)")
+  async def worker_edit(self, interaction: discord.Interaction, id: str, user: discord.Member, name: str, url: str, price: int, image1: str, image2: str = None, image3: str = None, image4: str = None, image5: str = None, image6: str = None, image7: str = None, image8: str = None, image9: str = None):
     await interaction.response.defer(ephemeral=True)
     if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете воспользоваться этой коммандой", ephemeral=True)
-  
-    message_data = {"flags": 36864,"components": [{"type": 17,"components": [{"type": 12, "items": [{"media": {"url": f"{url}"}}]}, {"type": 14, "spacing": 2, "divider": True}, {"type": 10, "content": f"# {rendermaker}\n### > Bio:\n{bio.replace('\\n', '\n')}\n\n## > Price: в среднем {price}₽"}]}]}
+
+    images = [image1, image2, image3, image4, image5, image6, image7, image8, image9]
+    images = [img for img in images if img]
+    media_items = [{"media": {"url": img}} for img in images]
+    
+    #roles = [role for role in user.roles if role.id in WORKERS]
+    #role_mentions = ", ".join(role.mention for role in roles)
+    
+    message_data = {"flags": 36864,"components": [{"type": 17,"components": [{"type": 12, "items": [{"media": {"url": f"{url}"}}]}, {"type": 14, "spacing": 2, "divider": True}, {"type": 10, "content": f"# {user.display_name}\nПривет! Я {user.mention}, но можно просто \"**{name}**\"\n\n## > Price: в среднем {price}₽"}]}, {"type": 17,"components": [{"type": 10, "content": f"## > Примеры работ:"}, {"type": 12, "items": media_items}]}]}
   
     thread = interaction.guild.get_channel(id)
     if thread is None:
       try: thread = await interaction.guild.fetch_channel(id)
       except Exception: return await interaction.followup.send("Ошибка: ветка не найдена или ID неверный", ephemeral=True)
-    if thread.name != rendermaker: await thread.edit(name=rendermaker, reason=f"ЗАПРОС КОММАНДОЙ ОТ {interaction.user.name}")
+    if thread.name != user.display_name: await thread.edit(name=user.display_name, reason=f"ЗАПРОС КОММАНДОЙ ОТ {interaction.user.name}")
     await bot.http.request(discord.http.Route("PATCH", "/channels/{message_id}/messages/{message_id}", message_id=int(id)), json=message_data)
     await interaction.followup.send(f"[перейти к сообщению](<https://discord.com/channels/{interaction.guild.id}/{int(id)}/{int(id)}>)", ephemeral=True)
 
   @app_commands.command(name="delete", description="удалить портфолио для рендермейкера")
   @app_commands.describe(id="ID сообщения / ветки в 📍・портфолио")
-  async def rendermaker_delete(self, interaction: discord.Interaction, id: str):
+  async def worker_delete(self, interaction: discord.Interaction, id: str):
     await interaction.response.defer(ephemeral=True)
     if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете воспользоваться этой коммандой", ephemeral=True)
   
@@ -92,19 +99,20 @@ class RendermakerCommands(app_commands.Group):
 
 
 @bot.tree.command(name="отзыв_review", description="показать окно отзыва", guild=discord.Object(id=GUILD_ID))
-@app_commands.describe(result_url="ссылка на результат заказа для отображения в отзыве")
-async def review(interaction: discord.Interaction, result_url: str):
+@app_commands.describe(result_url="ссылка на результат заказа для отображения в отзыве", worker="работник, который выполнял заказ", worker_type="тип работника")
+@app_commands.choices(worker_type=[app_commands.Choice(name="🎥 Рендермейкер", value="rendermaker"), app_commands.Choice(name="📸 Мультипликатор", value="title_animator"), app_commands.Choice(name="🎞️ Аниматор", value="animator")])
+async def review(interaction: discord.Interaction, result_url: str, worker: discord.Member, worker_type: app_commands.Choice[str]):
   await interaction.response.defer(ephemeral=True)
   clear_old_cache()
   if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send_message("Вы не можете воспользоваться этой коммандой", ephemeral=True)
   if not interaction.channel.category or interaction.channel.category.id != TICKET_CREATE_CATEGORY: return await interaction.followup.send("Вы не можете показывать отзыв вне тикетов", ephemeral=True)
-  CACHE[interaction.channel.id] = {"data": result_url, "created_at": time.time()}
+  CACHE[interaction.channel.id] = {"data": result_url, "worker": worker.id, "worker_type": worker_type.value, "created_at": time.time()}
     
   message_data = {"flags": 36864, "components": [
     {"type": 17, "components": [
         {"type": 12, "items": [{"media": {"url": REVIEW}}]},
         {"type": 14, "spacing": 2, "divider": True},
-        {"type": 10, "content": f"# Отзыв о заказе\n\n### > Инструкция по написанию отзыва:\n1. Вам не нужно загружать готовый продукт, бот это сделает за вас.\n2. Вам нужно нажать на кнопку «Написать отзыв» и заполнить поля."},
+        {"type": 10, "content": f"# <:859388130411282442:1508810635981361212> Отзыв о заказе\n\n### > Инструкция по написанию отзыва:\n1. Вам не нужно загружать готовый продукт, бот это сделает за вас.\n2. Вам нужно нажать на кнопку «Написать отзыв» и заполнить поля."},
         {"type": 1, "components": [{"type": 2, "style": 2, "label": "Написать отзыв", "emoji": {"name": "Paper", "id": 1506354283853910159}, "custom_id": f"ticket_button:review"}]},
     ]}
   ]}
@@ -123,7 +131,7 @@ async def payment(interaction: discord.Interaction, amount: int):
     {"type": 17, "components": [
         {"type": 12, "items": [{"media": {"url": PAYMENT}}]},
         {"type": 14, "spacing": 2, "divider": True},
-        {"type": 10, "content": f"# Оплата заказа\n### > Карта:\n{CARD}\n\n### > Сумма к оплате:\n{amount}₽\n\n### > Инструкция по оплате:\n1. Отправьте сумму на карту, указанную выше с комментарием «`Оплата заказа: {interaction.channel.name}`».\n2. После отправки средств, прикрепите скриншот с переводом."}
+        {"type": 10, "content": f"# <:866599434375528488:1508904126082187576> Оплата заказа\n### > Карта:\n{CARD}\n\n### > Сумма к оплате:\n{amount}₽\n\n### > Инструкция по оплате:\n1. Отправьте сумму на карту, указанную выше с комментарием «`Оплата заказа: {interaction.channel.name}`».\n2. После отправки средств, прикрепите скриншот с переводом."}
     ]}
   ]}
   
@@ -295,5 +303,5 @@ class ConfigCommands(app_commands.Group):
     await interaction.followup.send("готово", ephemeral=True)
 
 
-bot.tree.add_command(RendermakerCommands(), guild=discord.Object(id=GUILD_ID))
+bot.tree.add_command(WorkersCommands(), guild=discord.Object(id=GUILD_ID))
 #bot.tree.add_command(ConfigCommands(), guild=discord.Object(id=GUILD_ID))

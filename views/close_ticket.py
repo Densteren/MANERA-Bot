@@ -13,7 +13,7 @@ class CloseButton(discord.ui.Button):
         msg_close = await interaction.followup.send("Ты уверен, что хочешь оборвать фотоплёнку?", view=ConfirmCloseView(interaction.message), ephemeral=True)
 
 class CompleteButton(discord.ui.Button):
-    def __init__(self): super().__init__(label="Завершить заказ", style=discord.ButtonStyle.green, custom_id="ticket:complete", emoji="🔒")
+    def __init__(self): super().__init__(label="Завершить заказ", style=discord.ButtonStyle.gray, custom_id="ticket:complete", emoji="<:Toggle_Switch_On:1508919284233928704>")
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -103,7 +103,7 @@ class CloseView(discord.ui.View):
         global msg_close
         msg_close = await interaction.followup.send("Ты уверен, что хочешь оборвать фотоплёнку?",view=ConfirmCloseView(interaction.message), ephemeral=True)
     
-    @discord.ui.button(label="Завершить заказ", style=discord.ButtonStyle.green, custom_id="ticket:complete", emoji="🔒")
+    @discord.ui.button(label="Завершить заказ", style=discord.ButtonStyle.gray, custom_id="ticket:complete", emoji="<:Toggle_Switch_On:1508919284233928704>")
     async def complete(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете завершить заказ", ephemeral=True)

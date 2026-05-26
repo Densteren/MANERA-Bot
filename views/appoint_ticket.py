@@ -4,7 +4,7 @@ from views.close_ticket import CompleteButton
 from config import STAFF, RENDERMAKER_ROLE, ANIMATOR_ROLE, TITLE_ANIMATOR_ROLE
 
 class AppointTicketButtonRender(discord.ui.Button):
-    def __init__(self): super().__init__(label="Назначить рендермейкера", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_render", emoji="<:diamond_spear:1506362376407093388>")
+    def __init__(self): super().__init__(label="Назначить рендермейкера", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_render", emoji="<:Luck:1508919286096461916>")
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -36,7 +36,7 @@ class AppointTicketButtonRender(discord.ui.Button):
     
 
 class AssignDesiredTicketButtonRender(discord.ui.Button):
-    def __init__(self, user): super().__init__(label=f"Назначить {user}", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_render", emoji="<:diamond_spear:1506362376407093388>")
+    def __init__(self, user): super().__init__(label=f"Назначить {user}", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_render", emoji="<:Luck:1508919286096461916>")
 
     async def callback(self, interaction: discord.Interaction):
         user_id, selected_id = map(int, interaction.channel.topic.split(":"))
@@ -56,7 +56,7 @@ class AssignDesiredTicketButtonRender(discord.ui.Button):
 
 
 class AppointTicketButtonAnimator(discord.ui.Button):
-    def __init__(self): super().__init__(label="Назначить аниматора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_animator", emoji="<:diamond_spear:1506362376407093388>")
+    def __init__(self): super().__init__(label="Назначить аниматора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_animator", emoji="<:Luck:1508919286096461916>")
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -88,7 +88,7 @@ class AppointTicketButtonAnimator(discord.ui.Button):
     
 
 class AssignDesiredTicketButtonAnimator(discord.ui.Button):
-    def __init__(self, user): super().__init__(label=f"Назначить {user}", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_animator", emoji="<:diamond_spear:1506362376407093388>")
+    def __init__(self, user): super().__init__(label=f"Назначить {user}", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_animator", emoji="<:Luck:1508919286096461916>")
 
     async def callback(self, interaction: discord.Interaction):
         user_id, selected_id = map(int, interaction.channel.topic.split(":"))
@@ -108,7 +108,7 @@ class AssignDesiredTicketButtonAnimator(discord.ui.Button):
 
 
 class AppointTicketButtonTitleAnimator(discord.ui.Button):
-    def __init__(self): super().__init__(label="Назначить мультипликатора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_title_animator", emoji="<:diamond_spear:1506362376407093388>")
+    def __init__(self): super().__init__(label="Назначить мультипликатора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_title_animator", emoji="<:Luck:1508919286096461916>")
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
@@ -140,7 +140,7 @@ class AppointTicketButtonTitleAnimator(discord.ui.Button):
     
 
 class AssignDesiredTicketButtonTitleAnimator(discord.ui.Button):
-    def __init__(self, user): super().__init__(label=f"Назначить {user}", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_title_animator", emoji="<:diamond_spear:1506362376407093388>")
+    def __init__(self, user): super().__init__(label=f"Назначить {user}", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_title_animator", emoji="<:Luck:1508919286096461916>")
 
     async def callback(self, interaction: discord.Interaction):
         user_id, selected_id = map(int, interaction.channel.topic.split(":"))
@@ -163,7 +163,7 @@ class AssignDesiredTicketButtonTitleAnimator(discord.ui.Button):
 class RenderView(discord.ui.View):
     def __init__(self): super().__init__(timeout=None)
         
-    @discord.ui.button(label="Назначить рендермейкера", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_render", emoji="<:diamond_spear:1506362376407093388>")
+    @discord.ui.button(label="Назначить рендермейкера", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_render", emoji="<:Luck:1508919286096461916>")
     async def appoint_render(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете назначить рендермейкера", ephemeral=True)
@@ -192,7 +192,7 @@ class RenderView(discord.ui.View):
         global msd_appoint
         msd_appoint = await interaction.followup.send(view=view, ephemeral=True)
     
-    @discord.ui.button(label="Назначить желаемого рендермейкера", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_render", emoji="<:diamond_spear:1506362376407093388>")
+    @discord.ui.button(label="Назначить желаемого рендермейкера", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_render", emoji="<:Luck:1508919286096461916>")
     async def appoint_desired_render(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id, selected_id = map(int, interaction.channel.topic.split(":"))
         await interaction.response.defer(ephemeral=True)
@@ -208,7 +208,7 @@ class RenderView(discord.ui.View):
         await interaction.message.edit(view=new_view)
         await interaction.followup.send(f"{member.mention} назначен", ephemeral=True)
 
-    @discord.ui.button(label="Назначить аниматора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_animator", emoji="<:diamond_spear:1506362376407093388>")
+    @discord.ui.button(label="Назначить аниматора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_animator", emoji="<:Luck:1508919286096461916>")
     async def appoint_animator(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете назначить аниматора", ephemeral=True)
@@ -237,7 +237,7 @@ class RenderView(discord.ui.View):
         global msd_appoint
         msd_appoint = await interaction.followup.send(view=view, ephemeral=True)
     
-    @discord.ui.button(label="Назначить желаемого аниматора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_animator", emoji="<:diamond_spear:1506362376407093388>")
+    @discord.ui.button(label="Назначить желаемого аниматора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_animator", emoji="<:Luck:1508919286096461916>")
     async def appoint_desired_animator(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id, selected_id = map(int, interaction.channel.topic.split(":"))
         await interaction.response.defer(ephemeral=True)
@@ -253,7 +253,7 @@ class RenderView(discord.ui.View):
         await interaction.message.edit(view=new_view)
         await interaction.followup.send(f"{member.mention} назначен", ephemeral=True)
 
-    @discord.ui.button(label="Назначить мультипликатора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_title_animator", emoji="<:diamond_spear:1506362376407093388>")
+    @discord.ui.button(label="Назначить мультипликатора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_title_animator", emoji="<:Luck:1508919286096461916>")
     async def appoint_title_animator(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.defer(ephemeral=True)
         if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете назначить мультипликатора", ephemeral=True)
@@ -282,7 +282,7 @@ class RenderView(discord.ui.View):
         global msd_appoint
         msd_appoint = await interaction.followup.send(view=view, ephemeral=True)
     
-    @discord.ui.button(label="Назначить желаемого мультипликатора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_title_animator", emoji="<:diamond_spear:1506362376407093388>")
+    @discord.ui.button(label="Назначить желаемого мультипликатора", style=discord.ButtonStyle.gray, custom_id="ticket:appoint_desired_title_animator", emoji="<:Luck:1508919286096461916>")
     async def appoint_desired_title_animator(self, interaction: discord.Interaction, button: discord.ui.Button):
         user_id, selected_id = map(int, interaction.channel.topic.split(":"))
         await interaction.response.defer(ephemeral=True)
@@ -300,5 +300,5 @@ class RenderView(discord.ui.View):
 
 
 class TicketTakenButton(discord.ui.Button):
-    def __init__(self, user=str): super().__init__(label=user, style=discord.ButtonStyle.gray, custom_id="ticket:taken", emoji="<:diamond_spear:1506362376407093388>", disabled=True)
+    def __init__(self, user=str): super().__init__(label=user, style=discord.ButtonStyle.gray, custom_id="ticket:taken", emoji="<:Luck:1508919286096461916>", disabled=True)
     async def callback(self): pass
