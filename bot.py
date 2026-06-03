@@ -45,36 +45,48 @@ class WorkersCommands(app_commands.Group):
   
   @app_commands.command(name="add", description="добавить портфолио для рендермейкера")
   @app_commands.describe(user="Работник", name="Как обращаться к работнику", url="Ссылка на изображение (1 главное изображение)", price="Цена (в среднем в ₽)")
-  async def worker_add(self, interaction: discord.Interaction, user: discord.Member, name: str, url: str, price: int, image1: str, image2: str = None, image3: str = None, image4: str = None, image5: str = None, image6: str = None, image7: str = None, image8: str = None, image9: str = None):
+  async def worker_add(self, interaction: discord.Interaction, user: discord.Member, name: str, url: str, price: int, image1: str, image2: str = None, image3: str = None, image4: str = None, image5: str = None, image6: str = None, image7: str = None, image8: str = None, image9: str = None, video2: str = None, video3: str = None, video4: str = None, video5: str = None, video6: str = None, catalog: str = None):
     await interaction.response.defer(ephemeral=True)
     if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете воспользоваться этой коммандой", ephemeral=True)
 
     images = [image1, image2, image3, image4, image5, image6, image7, image8, image9]
     images = [img for img in images if img]
     media_items = [{"media": {"url": img}} for img in images]
+    videos = [video2, video3, video4, video5, video6]
+    videos = [vid for vid in videos if vid]
+    media_items2 = [{"media": {"url": vid}} for vid in videos]
+    if len(images) + len(videos) > 9: return await interaction.followup.send(f"Максимум можно указать 9 медиафайлов. Сейчас указано: {len(images) + len(videos)}", ephemeral=True)
 
     #roles = [role for role in user.roles if role.id in WORKERS]
     #role_mentions = ", ".join(role.mention for role in roles)
     
-    message_data = {"name": user.display_name, "message": {"flags": 36864, "components": [{"type": 17, "components": [{"type": 12, "items": [{"media": {"url": url}}]}, {"type": 14, "spacing": 2, "divider": True}, {"type": 10, "content": f"# {user.display_name}\nПривет! Я {user.mention}, но можно просто \"**{name}**\"\n\n## > Price: в среднем {price}₽"}]}, {"type": 17,"components": [{"type": 10, "content": f"## > Примеры работ:"}, {"type": 12, "items": media_items}]}]}}
+    components = [{"type": 17, "components": [{"type": 12,"items": [{"media": {"url": url}}]}, {"type": 14, "spacing": 2, "divider": True}, {"type": 10, "content": (f'# {user.display_name}\nПривет! Я {user.mention}, но можно просто "**{name}**"\n\n## > Price: в среднем {price}₽')}]}, {"type": 17, "components": [{"type": 10, "content": "## > Примеры работ:"}, {"type": 12, "items": media_items}]}]
+    if media_items2: components.append({"type": 17, "components": [{"type": 10, "content": "## > Примеры анимаций:"}, {"type": 12, "items": media_items2}, {"type": 10, "content": f"## > Price: смотри в {catalog if catalog else 'каталоге'}"}]})
+    message_data = {"name": user.display_name, "message": {"flags": 36864, "components": components}}
     
     msg = await bot.http.request(discord.http.Route("POST", "/channels/{forum_id}/threads", forum_id=RENDERMAKER_FORUM_ID), json=message_data, reason=f"ЗАПРОС КОММАНДОЙ ОТ {interaction.user.name}")
     await interaction.followup.send(f"[перейти к сообщению](<https://discord.com/channels/{GUILD_ID}/{msg["id"]}/{msg["id"]}>)", ephemeral=True)
 
   @app_commands.command(name="edit", description="редактировать портфолио для рендермейкера")
-  @app_commands.describe(id="ID сообщения / ветки в 📍・портфолио", user="Работник", name="Как обращаться к работнику", url="Ссылка на изображение (1 главное изображение)", price="Цена (в среднем в ₽)")
-  async def worker_edit(self, interaction: discord.Interaction, id: str, user: discord.Member, name: str, url: str, price: int, image1: str, image2: str = None, image3: str = None, image4: str = None, image5: str = None, image6: str = None, image7: str = None, image8: str = None, image9: str = None):
+  @app_commands.describe(id="ID сообщения / ветки в 📍・портфолио", user="Работник", name="Как обращаться к работнику", url="Ссылка на изображение (1 главное изображение)", price="Цена (в среднем в ₽)", catalog="Ссылка на каталог")
+  async def worker_edit(self, interaction: discord.Interaction, id: str, user: discord.Member, name: str, url: str, price: int, image1: str, image2: str = None, image3: str = None, image4: str = None, image5: str = None, image6: str = None, image7: str = None, image8: str = None, image9: str = None, video2: str = None, video3: str = None, video4: str = None, video5: str = None, video6: str = None, catalog: str = None):
     await interaction.response.defer(ephemeral=True)
     if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете воспользоваться этой коммандой", ephemeral=True)
 
     images = [image1, image2, image3, image4, image5, image6, image7, image8, image9]
     images = [img for img in images if img]
     media_items = [{"media": {"url": img}} for img in images]
-    
+    videos = [video2, video3, video4, video5, video6]
+    videos = [vid for vid in videos if vid]
+    media_items2 = [{"media": {"url": vid}} for vid in videos]
+    if len(images) + len(videos) > 9: return await interaction.followup.send(f"Максимум можно указать 9 медиафайлов. Сейчас указано: {len(images) + len(videos)}", ephemeral=True)
+
     #roles = [role for role in user.roles if role.id in WORKERS]
     #role_mentions = ", ".join(role.mention for role in roles)
     
-    message_data = {"flags": 36864,"components": [{"type": 17,"components": [{"type": 12, "items": [{"media": {"url": f"{url}"}}]}, {"type": 14, "spacing": 2, "divider": True}, {"type": 10, "content": f"# {user.display_name}\nПривет! Я {user.mention}, но можно просто \"**{name}**\"\n\n## > Price: в среднем {price}₽"}]}, {"type": 17,"components": [{"type": 10, "content": f"## > Примеры работ:"}, {"type": 12, "items": media_items}]}]}
+    components = [{"type": 17, "components": [{"type": 12,"items": [{"media": {"url": url}}]}, {"type": 14, "spacing": 2, "divider": True}, {"type": 10, "content": (f'# {user.display_name}\nПривет! Я {user.mention}, но можно просто "**{name}**"\n\n## > Price: в среднем {price}₽')}]}, {"type": 17, "components": [{"type": 10, "content": "## > Примеры работ:"}, {"type": 12, "items": media_items}]}]
+    if media_items2: components.append({"type": 17, "components": [{"type": 10, "content": "## > Примеры анимаций:"}, {"type": 12, "items": media_items2}, {"type": 10, "content": f"## > Price: смотри в {catalog if catalog else 'каталоге'}"}]})
+    message_data = {"flags": 36864,"components": components}
   
     thread = interaction.guild.get_channel(id)
     if thread is None:
