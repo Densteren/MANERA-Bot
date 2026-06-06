@@ -4,7 +4,7 @@ from config import TICKET_CREATE_CATEGORY, GUILD_ID, RENDERMAKER_ROLE, ANIMATOR_
 from fs import generate_random_id
 from views.close_ticket import CloseButton
 from views.appoint_ticket import AppointTicketButtonRender, AssignDesiredTicketButtonRender, AppointTicketButtonAnimator, AssignDesiredTicketButtonAnimator, AppointTicketButtonTitleAnimator, AssignDesiredTicketButtonTitleAnimator
-from config import TICKET_VIEWIER_ROLES, STAFF, BUYER_ROLE
+from config import TICKET_VIEWIER_ROLES, STAFF
 from images.images_url import CREATEREQUESTMODAL
 class CreateRequestModal(discord.ui.Modal):
     def __init__(self, type: str, bot):
@@ -151,5 +151,4 @@ class CreateRequestModal(discord.ui.Modal):
                     if resp.status == 200:
                         file_bytes = await resp.read()
                         discord_files.append(discord.File(io.BytesIO(file_bytes), filename=att["filename"]))
-        if discord_files: await created.send(content="### 📎 `Загруженные файлы:`", files=discord_files)
-        await interaction.user.add_roles(interaction.guild.get_role(BUYER_ROLE), reason="БЫЛ ОТКРЫТ ТИКЕТ")
+        if discord_files: await created.send(content="### > <:Arms_Up_Pottery_Sherd:1512136849966104847> Загруженные файлы:", files=discord_files)

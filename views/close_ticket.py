@@ -1,6 +1,6 @@
 import discord
 from asyncio import sleep
-from config import TICKET_VIEWIER_ROLES, STAFF, BUYER_ROLE, TICKET_CLOSE_CATEGORY
+from config import TICKET_VIEWIER_ROLES, STAFF, TICKET_CLOSE_CATEGORY
 
 class CloseButton(discord.ui.Button):
     def __init__(self): super().__init__(label="Отменить заказ", style=discord.ButtonStyle.gray, custom_id="ticket:close", emoji="<:Barrier:1506354696430948473>")
@@ -29,8 +29,9 @@ class ConfirmCompleteView(discord.ui.View):
 
     @discord.ui.button(label="Подтвердить", style=discord.ButtonStyle.danger, custom_id="ticket:complete:confirm")
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        member = interaction.guild.get_member(int(interaction.channel.topic))
-        if interaction.user.id != int(interaction.channel.topic):
+        user_id, selected_id = map(int, interaction.channel.topic.split(":"))
+        member = interaction.guild.get_member(user_id)
+        if interaction.user.id != user_id:
             await interaction.channel.send(f"{member.mention}, {interaction.user.mention} сохранил твою фотоплёнку. *Надеемся увидеть тебя еще раз!*")
             await msg_complite.edit(content="Тикет закрыт!", view=None)
         else:
@@ -48,8 +49,7 @@ class ConfirmCompleteView(discord.ui.View):
         old_name = interaction.channel.name
         category = interaction.guild.get_channel(TICKET_CLOSE_CATEGORY)
         if not category: category = None
-        await interaction.channel.edit(overwrites=overwrites, name=f"closed-{old_name}", category=category, topic="", reason="ТИКЕТ БЫЛ ЗАКРЫТ")
-        await member.remove_roles(interaction.guild.get_role(BUYER_ROLE), reason="ТИКЕТ БЫЛ ЗАКРЫТ")
+        await interaction.channel.edit(overwrites=overwrites, name=f"closed-{old_name}", category=category, reason="ТИКЕТ БЫЛ ЗАКРЫТ")
 
     @discord.ui.button(label="Отмена", style=discord.ButtonStyle.secondary, custom_id="ticket:complete:reject")
     async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -83,7 +83,6 @@ class ConfirmCloseView(discord.ui.View):
         category = interaction.guild.get_channel(TICKET_CLOSE_CATEGORY)
         if not category: category = None
         await interaction.channel.edit(overwrites=overwrites, name=f"closed-{old_name}", category=category, topic="", reason="ТИКЕТ БЫЛ ЗАКРЫТ")
-        await member.remove_roles(interaction.guild.get_role(BUYER_ROLE), reason="ТИКЕТ БЫЛ ЗАКРЫТ")
 
 
     @discord.ui.button(label="Отмена", style=discord.ButtonStyle.secondary, custom_id="ticket:close:reject")
@@ -109,4 +108,3 @@ class CloseView(discord.ui.View):
         if not any(role.id in STAFF for role in interaction.user.roles): return await interaction.followup.send("Вы не можете завершить заказ", ephemeral=True)
         global msg_complite
         msg_complite = await interaction.followup.send("Ты уверен, что хочешь отложить фотоплёнку?", view=ConfirmCompleteView(interaction.message), ephemeral=True)
-        

@@ -9,7 +9,7 @@ class TicketTypeSelect(discord.ui.View):
   def __init__(self, bot):
     super().__init__(timeout=None)
     self.bot = bot
-    self.clear_cooldowns = {} 
+    self.clear_cooldowns = {}
 
   @discord.ui.select(placeholder="Выберите нужное", custom_id="ticket:placing_an_order", options=[discord.SelectOption(label="FULL RENDER", value="render", emoji="<:Netherite_Upgrade_Smithing_Templ:1495122438797660243>"), discord.SelectOption(label="CUSTOM ANIMATION", value="animation", emoji="<:Axolotl:1503669257286717440>", default=False), discord.SelectOption(label="MINECRAFT TITLE ANIMATION", value="title", emoji="<:Cherry_Hanging_Sign:1506355717303701587>", default=False)])
   async def placing_select(self, interaction: discord.Interaction, select: discord.ui.Select):
@@ -19,9 +19,8 @@ class TicketTypeSelect(discord.ui.View):
   @discord.ui.button(label="Написать отзыв", custom_id="ticket_button:review", style=discord.ButtonStyle.gray, emoji="<:Paper:1506354283853910159>",)
   async def review_button(self, interaction: discord.Interaction, button: discord.ui.Button):
     clear_old_cache()
-    cache_data = CACHE.get(interaction.channel.id)
-    if not cache_data: return await interaction.response.send_message("Кэш не найден :(", ephemeral=True)
-    await interaction.response.send_modal(ReviewModal(self.bot, channel=interaction.channel.id))
+    if not CACHE.get(interaction.channel.id): return await interaction.response.send_message("Кэш не найден :(", ephemeral=True)
+    await interaction.response.send_modal(ReviewModal(self.bot))
 
   @discord.ui.button(label="Очистить выбор", custom_id="ticket:clear", style=discord.ButtonStyle.gray, emoji="<:Wind_Charged:1488847018930737262>")
   async def clear_button(self, interaction: discord.Interaction, button: discord.ui.Button):
